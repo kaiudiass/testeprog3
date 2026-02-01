@@ -4,8 +4,7 @@ public partial class MainViewModel : ObservableObject
 {
     private INavigator _navigator;
 
-    [ObservableProperty]
-    private string? name;
+    [ObservableProperty] private string? name;
 
     public MainViewModel(
         IStringLocalizer localizer,
@@ -18,6 +17,7 @@ public partial class MainViewModel : ObservableObject
         Title += $" - {appInfo?.Value?.Environment}";
         GoToSecond = new AsyncRelayCommand(GoToSecondView);
     }
+
     public string? Title { get; }
 
     public ICommand GoToSecond { get; }
@@ -26,5 +26,4 @@ public partial class MainViewModel : ObservableObject
     {
         await _navigator.NavigateViewModelAsync<SecondViewModel>(this, data: new Entity(Name!));
     }
-
 }
