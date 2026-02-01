@@ -39,6 +39,7 @@
     </PropertyGroup>
     <ItemGroup>
         <PackageReference Include="LibVLCSharp" />
+        <PackageReference Include="VideoLAN.LibVLC.Windows" />
     </ItemGroup>
 
 </Project>
