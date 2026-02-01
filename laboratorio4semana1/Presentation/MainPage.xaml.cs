@@ -1,32 +1,71 @@
-﻿using Microsoft.UI.Xaml.Input;
-using Windows.Media.Core;
+﻿using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using System;
+using System.Threading.Tasks;
+using Windows.Storage;
+using LibVLCSharp.Shared; // O namespace do VLC
 
 namespace laboratorio4semana1.Presentation;
 
 public sealed partial class MainPage : Page
 {
-    private double _yPos = 100; // Posição vertical inicial
-    private const double Step = 15; // Velocidade do movimento
+    private double _yPos = 0;
+    private const double Step = 20;
+
+    // Variáveis do LibVLC
+    private LibVLC _libVlc;
+    private LibVLCSharp.Shared.MediaPlayer _vlcPlayer;
+    
+    // CORREÇÃO 1: Adicionado '?' para permitir nulo e evitar Warning CS8618
+    private Media? _moveSoundMedia; 
 
     public MainPage()
     {
         this.InitializeComponent();
-        
-        // Garante que o Canvas receba o foco para detectar o teclado
-        this.Loaded += (s, e) => GameCanvas.Focus(FocusState.Programmatic);
-        
-        // Assina o evento de tecla pressionada
-        this.KeyDown += MainPage_KeyDown;
 
-        // Carrega o som de movimento
-        SFXPlayer.Source = MediaSource.CreateFromUri(new Uri("ms-appx:///Assets/move_sound.mp3"));
+        // CORREÇÃO 2: Removido 'if (!Core.IsInitialized)' que causava o erro.
+        // O Initialize já trata isso internamente na maioria dos casos.
+        Core.Initialize(); 
+
+        _libVlc = new LibVLC();
+        _vlcPlayer = new LibVLCSharp.Shared.MediaPlayer(_libVlc);
+
+        // CORREÇÃO 3: Adicionado '_ =' para silenciar o Warning CS4014 (Fire-and-forget)
+        _ = InitializeAudioAsync();
+
+        // Configurações de Teclado e Foco
+        this.KeyDown += MainPage_KeyDown;
+        this.Loaded += (s, e) =>
+        {
+            this.Focus(FocusState.Programmatic);
+            Canvas.SetTop(PlayerSprite, _yPos);
+        };
+    }
+
+    private async Task InitializeAudioAsync()
+    {
+        try
+        {
+            // O LibVLC precisa do caminho físico do arquivo.
+            var file = await StorageFile.GetFileFromApplicationUriAsync(new Uri("ms-appx:///Assets/move_sound.mp3"));
+
+            // Cria a mídia a partir do caminho do arquivo
+            _moveSoundMedia = new Media(_libVlc, file.Path, FromType.FromPath);
+            
+            // Opcional: Pré-analisa a mídia para agilizar o primeiro play
+            _moveSoundMedia.Parse(MediaParseOptions.ParseLocal);
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Erro ao carregar áudio VLC: {ex.Message}");
+        }
     }
 
     private void MainPage_KeyDown(object sender, KeyRoutedEventArgs e)
     {
         bool moved = false;
 
-        // Verifica as setas para cima e para baixo
         if (e.Key == Windows.System.VirtualKey.Up)
         {
             _yPos -= Step;
@@ -40,12 +79,23 @@ public sealed partial class MainPage : Page
 
         if (moved)
         {
-            // Aplica a nova posição ao sprite no Canvas
             Canvas.SetTop(PlayerSprite, _yPos);
-            
-            // Toca o som (reseta se já estiver tocando para repetir rápido)
-            SFXPlayer.MediaPlayer.Stop();
-            SFXPlayer.MediaPlayer.Play();
+            PlaySound();
+        }
+    }
+
+    private void PlaySound()
+    {
+        // Verifica se a mídia foi carregada antes de tentar tocar
+        if (_vlcPlayer != null && _moveSoundMedia != null)
+        {
+            if (_vlcPlayer.IsPlaying)
+            {
+                _vlcPlayer.Stop();
+            }
+
+            _vlcPlayer.Media = _moveSoundMedia;
+            _vlcPlayer.Play();
         }
     }
 }

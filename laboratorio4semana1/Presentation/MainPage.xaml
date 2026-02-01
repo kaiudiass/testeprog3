@@ -3,7 +3,8 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:local="using:laboratorio4semana1.Presentation"
       xmlns:utu="using:Uno.Toolkit.UI"
-      Background="{ThemeResource BackgroundBrush}">
+      Background="{ThemeResource BackgroundBrush}"
+      KeyDown="MainPage_KeyDown">
 
     <Grid utu:SafeArea.Insets="VisibleBounds">
         <Grid.RowDefinitions>
@@ -13,13 +14,19 @@
 
         <utu:NavigationBar Content="Laboratório 4 - Sprite" />
 
-        <Canvas x:Name="GameCanvas" Grid.Row="1" Background="Transparent" IsTabStop="True">
-            <Image x:Name="PlayerSprite"
-                   Source="ms-appx:///Assets/sprite.png"
-                   Width="60"
-                   Height="60" />
+        <Grid Grid.Row="1" x:Name="RootGrid" Background="Transparent">
+            <Canvas x:Name="GameCanvas">
+                <Image x:Name="PlayerSprite"
+                       Source="ms-appx:///Assets/sprite.png"
+                       Width="60"
+                       Height="60" />
+            </Canvas>
 
-            <MediaPlayerElement x:Name="SFXPlayer" Visibility="Collapsed" />
-        </Canvas>
+            <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Right" Margin="20">
+                <Button Content="Ir para Segunda Página"
+                        Command="{Binding GoToSecond}"
+                        Opacity="0.8" />
+            </StackPanel>
+        </Grid>
     </Grid>
 </Page>
